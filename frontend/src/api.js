@@ -24,14 +24,15 @@ export function setToken(token) {
 }
 
 export function isLoggedIn() {
-  return Boolean(getToken() || initData);
+  // Faqat telefon/parol tokeni — Telegram ochilishi avtomatik login emas
+  return Boolean(getToken());
 }
 
 function authHeaders() {
   const headers = {};
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (initData) headers["X-Telegram-Init-Data"] = initData;
+  // Telegram initData avtomatik login qilmasin — faqat telefon/parol token
   return headers;
 }
 

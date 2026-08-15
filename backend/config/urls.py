@@ -4,10 +4,10 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
 
-
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("books.urls")),
+    # Production (Render) da DEBUG=0 bo'lsa ham rasmlar ochilsin
     re_path(
         r"^uploads/(?P<path>.*)$",
         serve,

@@ -134,7 +134,7 @@ import AuthPage from "./components/AuthPage.vue";
 import BottomNav from "./components/BottomNav.vue";
 import FilterSheet from "./components/FilterSheet.vue";
 import Toast from "./components/Toast.vue";
-import { apiAuthed, apiGet, apiLogout, initData, isLoggedIn } from "./api";
+import { apiAuthed, apiGet, apiLogout, isLoggedIn } from "./api";
 
 const view = ref("main");
 const tab = ref("catalog");
@@ -173,18 +173,17 @@ onMounted(async () => {
   applyTheme();
   await loadCities();
   await loadBooks();
-  if (loggedIn.value) {
-    try {
-      profile.value = await apiAuthed("/api/profile/me");
-      await refreshMyCount();
-      await loadConversations();
-    } catch {
-      if (!initData) {
-        apiLogout();
-        loggedIn.value = false;
-      }
-    }
+ if (loggedIn.value) {
+  try {
+    profile.value = await apiAuthed("/api/profile/me");
+    await refreshMyCount();
+    await loadConversations();
+  } catch {
+    apiLogout();
+    loggedIn.value = false;
+    profile.value = null;
   }
+}
 });
 
 watch(filters, () => loadBooks(), { deep: true });

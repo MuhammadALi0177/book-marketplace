@@ -613,7 +613,15 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* ---- ADD BOOK ---- */
+.add-page {
+  padding-bottom: calc(var(--nav-h) + 48px + env(safe-area-inset-bottom, 0px));
+}
 .add-page .page-title { margin-bottom: 4px; }
+.add-page .submit-btn {
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+}
 .add-page .page-sub { margin-bottom: 18px; }
 .form-field {
   margin-bottom: 14px;
