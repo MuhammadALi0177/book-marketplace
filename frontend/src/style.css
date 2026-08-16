@@ -62,7 +62,7 @@ input, select, textarea { font-family: inherit; }
 
 /* ---- PAGE SHELL ---- */
 .page {
-  padding: 16px 16px 24px;
+  padding: 16px 16px calc(var(--nav-h) + 20px);
   max-width: 480px;
   margin: 0 auto;
   min-height: calc(100vh - var(--nav-h));
