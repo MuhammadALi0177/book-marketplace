@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <div class="brand-bar">
-      <img class="brand-logo" src="/logo.svg" alt="KitobJavon" @error="($e)=>$e.target.style.display='none'" />
+      <img class="brand-logo" src="/logo.png" alt="KitobJavon" @error="($e)=>$e.target.style.display='none'" />
       <div class="brand-text">Kitob<span>Javon</span></div>
     </div>
     <div class="page-head">
