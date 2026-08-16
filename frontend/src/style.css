@@ -1277,21 +1277,25 @@ input, select, textarea { font-family: inherit; }
   word-break: break-word;
   line-height: 1.25;
 }
+/* Logo — kattaroq va markazda */
 .brand-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 14px;
-  padding: 4px 0;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin: 8px 0 18px !important;
+  padding: 12px 16px !important;
+  background: var(--surface) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow) !important;
 }
 .brand-logo {
-  height: 56px;
-  width: auto;
-  max-width: 220px;
-  object-fit: contain;
-  object-position: left center;
-  display: block;
-  background: transparent;
-  border-radius: 0;
+  height: 72px !important;
+  width: auto !important;
+  max-width: 260px !important;
+  object-fit: contain !important;
+  display: block !important;
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 .brand-text {
   font-family: var(--font-display), var(--font);
