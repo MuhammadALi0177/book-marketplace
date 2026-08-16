@@ -25,7 +25,12 @@
     </div>
 
     <form class="chat-input-bar" @submit.prevent="send">
-      <input style="color: white;" v-model="text" placeholder="Xabar yozing..." :disabled="sending" />
+      <input
+        v-model="text"
+        placeholder="Xabar yozing..."
+        :disabled="sending"
+        style="color:var(--ink);-webkit-text-fill-color:var(--ink)"
+      />
       <button type="submit" class="chat-send" :disabled="!text.trim() || sending">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>

@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page settings-page">
     <div class="subpage-head">
       <button type="button" class="back-btn" @click="$emit('back')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -136,7 +136,7 @@ async function savePassword() {
     });
     pass.password = "";
     pass.confirm = "";
-    emit("error", "Parol yangilandi ✅"); // reuse toast via error event name - App will toast
+    emit("error", "Parol yangilandi ✅");
   } catch (e) {
     passError.value = e.message || "Parol saqlanmadi";
   } finally {

@@ -28,6 +28,7 @@
         :city="filters.city"
         :status="filters.status"
         :favs="favIds"
+        :loading="booksLoading"
         @update:search="filters.search = $event"
         @update:city="filters.city = $event"
         @update:status="filters.status = $event"
@@ -140,6 +141,7 @@ const view = ref("main");
 const tab = ref("catalog");
 const subPage = ref(null);
 const books = ref([]);
+const booksLoading = ref(true);
 const myCount = ref(0);
 const cities = ref([]);
 const filters = reactive({ city: "", status: "", search: "" });
@@ -173,17 +175,17 @@ onMounted(async () => {
   applyTheme();
   await loadCities();
   await loadBooks();
- if (loggedIn.value) {
-  try {
-    profile.value = await apiAuthed("/api/profile/me");
-    await refreshMyCount();
-    await loadConversations();
-  } catch {
-    apiLogout();
-    loggedIn.value = false;
-    profile.value = null;
+  if (loggedIn.value) {
+    try {
+      profile.value = await apiAuthed("/api/profile/me");
+      await refreshMyCount();
+      await loadConversations();
+    } catch {
+      apiLogout();
+      loggedIn.value = false;
+      profile.value = null;
+    }
   }
-}
 });
 
 watch(filters, () => loadBooks(), { deep: true });
@@ -204,6 +206,7 @@ async function loadCities() {
 }
 
 async function loadBooks() {
+  booksLoading.value = true;
   const params = new URLSearchParams();
   if (filters.city) params.set("city", filters.city);
   if (filters.status) params.set("status", filters.status);
@@ -212,6 +215,8 @@ async function loadBooks() {
     books.value = await apiGet(`/api/books?${params.toString()}`);
   } catch {
     showToast("Kitoblarni yuklashda xatolik");
+  } finally {
+    booksLoading.value = false;
   }
 }
 

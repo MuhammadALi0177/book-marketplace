@@ -13,9 +13,11 @@
     <div class="book-info">
       <div class="book-title">{{ book.title }}</div>
       <div class="book-author">{{ book.author }}</div>
-      <div class="book-meta-row">
+      <div class="book-city-row">
         <svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span>{{ book.city }}</span>
+      </div>
+      <div class="book-price-row">
         <span class="price" v-if="book.status === 'barter'">Barter</span>
         <span class="price" v-else>{{ formatPrice(book.price) }}</span>
       </div>

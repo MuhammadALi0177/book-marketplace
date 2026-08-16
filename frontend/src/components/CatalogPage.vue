@@ -1,9 +1,13 @@
 <template>
   <div class="page">
+    <div class="brand-bar">
+      <img class="brand-logo" src="/logo.svg" alt="KitobJavon" @error="($e)=>$e.target.style.display='none'" />
+      <div class="brand-text">Kitob<span>Javon</span></div>
+    </div>
     <div class="page-head">
       <div>
         <h1 class="page-title">Kitoblar</h1>
-        <p class="page-sub">{{ books.length }} ta kitob topildi</p>
+        <p class="page-sub">{{ loading ? 'Yuklanmoqda…' : (books.length + ' ta kitob topildi') }}</p>
       </div>
       <button type="button" class="filter-btn" @click="$emit('open-filters')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,6 +53,10 @@
           @toggle-fav="$emit('toggle-fav', b)"
         />
       </template>
+      <div v-else-if="loading" class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <p>Yuklanmoqda…</p>
+      </div>
       <div v-else class="empty-state">
         <div class="empty-icon">📖</div>
         <p>Kitob topilmadi</p>
@@ -67,6 +75,7 @@ const props = defineProps({
   city: { type: String, default: "" },
   status: { type: String, default: "" },
   favs: { type: Object, default: () => new Set() },
+  loading: { type: Boolean, default: false },
 });
 const emit = defineEmits(["update:search", "update:city", "update:status", "select", "toggle-fav", "open-filters"]);
 
