@@ -1280,14 +1280,18 @@ input, select, textarea { font-family: inherit; }
 .brand-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding: 4px 0;
 }
 .brand-logo {
-  width: 40px;
-  height: 40px;
+  height: 56px;
+  width: auto;
+  max-width: 220px;
   object-fit: contain;
-  border-radius: 10px;
+  object-position: left center;
+  display: block;
+  background: transparent;
+  border-radius: 0;
 }
 .brand-text {
   font-family: var(--font-display), var(--font);
