@@ -1,11 +1,12 @@
 import os
 import uuid
+import base64
 
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -198,7 +199,7 @@ class MyBooksView(generics.ListAPIView):
 
 class UploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
         file = request.FILES.get("file") or request.FILES.get("image")

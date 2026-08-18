@@ -21,7 +21,7 @@
         <input
           ref="fileRef"
           type="file"
-          accept="image/*,image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/*"
           @change="onFile"
         />
       </div>
@@ -87,61 +87,96 @@ const form = reactive({
 });
 const fileRef = ref(null);
 const preview = ref("");
-const file = ref(null);
+const fileBlob = ref(null);
 const loading = ref(false);
 const error = ref("");
 
-function compressToJpeg(f, maxSide = 1280, quality = 0.8) {
+function dataURLtoBlob(dataUrl) {
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8 = new Uint8Array(n);
+  while (n--) u8[n] = bstr.charCodeAt(n);
+  return new Blob([u8], { type: mime });
+}
+
+function compressToJpegBlob(f, maxSide = 1280, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(f);
     const img = new Image();
     img.onload = () => {
-      URL.revokeObjectURL(url);
-      let { width, height } = img;
-      if (width > maxSide || height > maxSide) {
-        if (width > height) {
-          height = Math.round((height * maxSide) / width);
-          width = maxSide;
-        } else {
-          width = Math.round((width * maxSide) / height);
-          height = maxSide;
+      try {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (!w || !h) {
+          reject(new Error("Rasm o'lchami noma'lum"));
+          return;
         }
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error("Rasm qayta ishlanmadi"));
-            return;
+        if (w > maxSide || h > maxSide) {
+          if (w > h) {
+            h = Math.round((h * maxSide) / w);
+            w = maxSide;
+          } else {
+            w = Math.round((w * maxSide) / h);
+            h = maxSide;
           }
-          resolve(new File([blob], "photo.jpg", { type: "image/jpeg" }));
-        },
-        "image/jpeg",
-        quality
-      );
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        if (canvas.toBlob) {
+          canvas.toBlob(
+            (blob) => {
+              if (blob && blob.size > 0) resolve(blob);
+              else {
+                try {
+                  resolve(dataURLtoBlob(canvas.toDataURL("image/jpeg", quality)));
+                } catch (e) {
+                  reject(e);
+                }
+              }
+            },
+            "image/jpeg",
+            quality
+          );
+        } else {
+          resolve(dataURLtoBlob(canvas.toDataURL("image/jpeg", quality)));
+        }
+      } catch (e) {
+        reject(e);
+      }
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Rasm ochilmadi. JPG/PNG tanlang"));
+      reject(
+        new Error(
+          "iPhone HEIC rasmni o'qib bo'lmadi. Sozlamalar → Kamera → Formatlar → Most Compatible qiling"
+        )
+      );
     };
     img.src = url;
   });
 }
 
 async function onFile(e) {
-  const f = e.target.files?.[0];
+  const f = e.target.files && e.target.files[0];
   if (!f) return;
   error.value = "";
+  preview.value = URL.createObjectURL(f);
   try {
-    preview.value = URL.createObjectURL(f);
-    file.value = await compressToJpeg(f);
+    fileBlob.value = await compressToJpegBlob(f);
   } catch (err) {
-    file.value = f;
-    if (!preview.value) preview.value = URL.createObjectURL(f);
+    if (f.type === "image/jpeg" || f.type === "image/png" || f.type === "image/webp") {
+      fileBlob.value = f;
+    } else {
+      fileBlob.value = null;
+      error.value = err.message || "Rasm tanlanmadi";
+    }
   }
 }
 
@@ -149,19 +184,26 @@ async function submit() {
   error.value = "";
   loading.value = true;
   try {
-    if (file.value) {
-      const fd = new FormData();
-      fd.append("file", file.value, file.value.name || "photo.jpg");
+    if (fileBlob.value) {
       const token = getToken();
       if (!token) throw new Error("Avval tizimga kiring");
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error("Rasm o'qilmadi"));
+        r.readAsDataURL(fileBlob.value);
+      });
       const upRes = await fetch(`${API_BASE}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ image_base64: dataUrl }),
       });
       const up = await upRes.json().catch(() => ({}));
       if (!upRes.ok) {
-        throw new Error(up.detail || `Rasm yuklanmadi (${upRes.status})`);
+        throw new Error(up.detail || "Rasm yuklanmadi (" + upRes.status + ")");
       }
       if (!up.photo_url) throw new Error("Rasm URL qaytmadi");
       form.photo_url = up.photo_url;
@@ -191,7 +233,7 @@ async function submit() {
       photo_url: "",
     });
     preview.value = "";
-    file.value = null;
+    fileBlob.value = null;
   } catch (e) {
     error.value = e.message || "Xatolik";
     emit("error", error.value);
