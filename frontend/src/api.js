@@ -43,12 +43,17 @@ export async function apiGet(path) {
 }
 
 export async function apiAuthed(path, options = {}) {
+  const headers = {
+    ...(options.headers || {}),
+    ...authHeaders(),
+  };
+  // FormData bo'lsa Content-Type qo'ymang — boundary avtomatik
+  if (typeof FormData !== "undefined" && options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      ...(options.headers || {}),
-      ...authHeaders(),
-    },
+    headers,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

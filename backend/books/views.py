@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,7 +28,7 @@ UZ_CITIES = [
     "Guliston", "Denov", "Zarafshon", "Katakurgan", "Shahrisabz",
 ]
 
-ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
+ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".gif"}
 
 
 class HealthView(APIView):
@@ -198,14 +198,16 @@ class MyBooksView(generics.ListAPIView):
 
 class UploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser]
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        file = request.FILES.get("file")
+        file = request.FILES.get("file") or request.FILES.get("image")
         if not file:
             return Response({"detail": "Fayl topilmadi"}, status=status.HTTP_400_BAD_REQUEST)
 
         ext = os.path.splitext(file.name)[1].lower()
+        if not ext:
+            ext = ".jpg"
         if ext not in ALLOWED_EXT:
             return Response(
                 {"detail": "Faqat jpg/png/webp rasm qabul qilinadi"},
@@ -220,7 +222,6 @@ class UploadView(APIView):
             for chunk in file.chunks():
                 f.write(chunk)
 
-        # Statik fayl /uploads orqali ochiladi (config/urls.py'da mount qilingan)
         return Response({"photo_url": f"{settings.MEDIA_URL}{filename}"})
 
 
