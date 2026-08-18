@@ -18,7 +18,12 @@
           </svg>
           Rasm yuklash
         </template>
-        <input ref="fileRef" type="file" accept="image/*" @change="onFile" />
+        <input
+          ref="fileRef"
+          type="file"
+          accept="image/*,image/jpeg,image/png,image/webp"
+          @change="onFile"
+        />
       </div>
 
       <div class="form-field">
@@ -63,7 +68,7 @@
 
 <script setup>
 import { reactive, ref } from "vue";
-import { apiAuthed, API_BASE } from "../api";
+import { apiAuthed, API_BASE, getToken } from "../api";
 
 defineProps({
   cities: { type: Array, default: () => [] },
@@ -86,11 +91,58 @@ const file = ref(null);
 const loading = ref(false);
 const error = ref("");
 
-function onFile(e) {
+function compressToJpeg(f, maxSide = 1280, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxSide || height > maxSide) {
+        if (width > height) {
+          height = Math.round((height * maxSide) / width);
+          width = maxSide;
+        } else {
+          width = Math.round((width * maxSide) / height);
+          height = maxSide;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Rasm qayta ishlanmadi"));
+            return;
+          }
+          resolve(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Rasm ochilmadi. JPG/PNG tanlang"));
+    };
+    img.src = url;
+  });
+}
+
+async function onFile(e) {
   const f = e.target.files?.[0];
   if (!f) return;
-  file.value = f;
-  preview.value = URL.createObjectURL(f);
+  error.value = "";
+  try {
+    preview.value = URL.createObjectURL(f);
+    file.value = await compressToJpeg(f);
+  } catch (err) {
+    file.value = f;
+    if (!preview.value) preview.value = URL.createObjectURL(f);
+  }
 }
 
 async function submit() {
@@ -99,8 +151,19 @@ async function submit() {
   try {
     if (file.value) {
       const fd = new FormData();
-      fd.append("file", file.value);
-      const up = await apiAuthed("/api/upload", { method: "POST", body: fd });
+      fd.append("file", file.value, file.value.name || "photo.jpg");
+      const token = getToken();
+      if (!token) throw new Error("Avval tizimga kiring");
+      const upRes = await fetch(`${API_BASE}/api/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const up = await upRes.json().catch(() => ({}));
+      if (!upRes.ok) {
+        throw new Error(up.detail || `Rasm yuklanmadi (${upRes.status})`);
+      }
+      if (!up.photo_url) throw new Error("Rasm URL qaytmadi");
       form.photo_url = up.photo_url;
     }
     const payload = {
@@ -118,7 +181,15 @@ async function submit() {
       body: JSON.stringify(payload),
     });
     emit("added");
-    Object.assign(form, { title: "", author: "", city: "", status: "sale", price: 0, description: "", photo_url: "" });
+    Object.assign(form, {
+      title: "",
+      author: "",
+      city: "",
+      status: "sale",
+      price: 0,
+      description: "",
+      photo_url: "",
+    });
     preview.value = "";
     file.value = null;
   } catch (e) {
